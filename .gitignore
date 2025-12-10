@@ -20,7 +20,7 @@ desktop.ini
 \#*#
 .*.sw?
 
-# IDE 文件（但保留 .cursor 和 .bmad）
+# IDE 文件
 .idea/
 .vscode/
 .cursor/
