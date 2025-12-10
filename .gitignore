@@ -104,9 +104,3 @@ kubeconfig
 *.old
 *.orig
 
-# 确保 .cursor 和 .bmad 目录不被忽略
-!.cursor/
-!.bmad/
-!.cursor/**
-!.bmad/**
-
