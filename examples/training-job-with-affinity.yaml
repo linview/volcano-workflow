@@ -1,0 +1,62 @@
+# MVP 版本 - 带调度策略的训练任务示例
+# 演示如何使用 nodeAffinity 实现 GPU 偏向性调度
+
+apiVersion: batch.volcano.sh/v1alpha1
+kind: Job
+metadata:
+  name: training-job-with-affinity
+  namespace: default
+spec:
+  schedulerName: volcano
+  queue: training-queue
+  minAvailable: 1
+  
+  tasks:
+    - replicas: 1
+      name: trainer
+      template:
+        spec:
+          containers:
+            - image: nvidia/cuda:11.8.0-base-ubuntu22.04
+              name: trainer
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  echo "开始训练..."
+                  sleep 60
+                  echo "训练完成"
+              resources:
+                requests:
+                  cpu: "4"
+                  memory: "16Gi"
+                  nvidia.com/gpu: "1"
+                limits:
+                  cpu: "8"
+                  memory: "32Gi"
+                  nvidia.com/gpu: "1"
+          
+          # 调度策略：GPU 偏向性调度
+          affinity:
+            nodeAffinity:
+              # 必须满足的条件（硬约束）
+              # 只有满足这些条件的节点才会被考虑
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: gpu.type
+                        operator: In
+                        values: ["a100"]  # ⚠️ 必须使用 A100 GPU
+              
+              # 偏好条件（软约束）
+              # 满足这些条件的节点会获得更高分数
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100  # 权重：值越大优先级越高
+                  preference:
+                    matchExpressions:
+                      - key: metrics.gpu.utilization
+                        operator: Lt
+                        values: ["60%"]  # 优先选择 GPU 使用率低于 60% 的节点
+          
+          restartPolicy: Never
+

@@ -1,0 +1,23 @@
+# MVP 版本 - 训练队列定义
+# 这是最简化的队列配置，只包含核心字段
+
+apiVersion: scheduling.volcano.sh/v1beta1
+kind: Queue
+metadata:
+  name: training-queue
+  namespace: default
+spec:
+  # 队列权重：值越大优先级越高
+  # 训练任务通常优先级最高
+  weight: 10
+  
+  # 资源配额：队列可以使用的最大资源
+  # ⚠️ 注意：根据你的集群实际资源调整这些值
+  capability:
+    cpu: "100"              # 100 核 CPU
+    memory: "200Gi"         # 200Gi 内存
+    nvidia.com/gpu: "8"     # 8 个 GPU
+  
+  # 队列状态：Open 表示队列可用
+  state: Open
+

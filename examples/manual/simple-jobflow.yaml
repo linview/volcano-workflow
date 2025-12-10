@@ -1,0 +1,79 @@
+# 最简 JobFlow 工作流示例
+# 用于验证 Volcano 工作流和任务依赖功能
+
+apiVersion: flow.volcano.sh/v1alpha1
+kind: JobFlow
+metadata:
+  name: simple-jobflow
+  namespace: volcano-system  # volcano-system 是 Volcano 组件和 Job/JobFlow 默认使用的命名空间，和 simple-job.yaml 保持一致。若使用 default，JobFlow 控制器可能无法感知/调度相关资源。
+spec:
+  minAvailable: 1
+  
+  # 工作流定义
+  flow:
+    name: simple-flow
+    steps:
+      # 步骤1: 第一个任务（无依赖）
+      - name: step1
+        template: hello-job
+        replicas: 1
+        minAvailable: 1
+      
+      # 步骤2: 第二个任务（依赖 step1）
+      - name: step2
+        template: world-job
+        replicas: 1
+        minAvailable: 1
+        dependsOn:
+          - step1  # ⚠️ 关键：依赖 step1 完成
+  
+  # 任务模板定义
+  templates:
+    # 模板1: Hello 任务
+    - name: hello-job
+      jobTemplate:
+        apiVersion: batch.volcano.sh/v1alpha1
+        kind: Job
+        metadata:
+          name: hello-job
+        spec:
+          schedulerName: volcano
+          minAvailable: 1
+          tasks:
+            - replicas: 1
+              name: hello
+              template:
+                spec:
+                  containers:
+                    - name: hello
+                      image: busybox:latest
+                      command:
+                        - /bin/sh
+                        - -c
+                        - echo "Step 1: Hello" && sleep 5
+                  restartPolicy: Never
+    
+    # 模板2: World 任务
+    - name: world-job
+      jobTemplate:
+        apiVersion: batch.volcano.sh/v1alpha1
+        kind: Job
+        metadata:
+          name: world-job
+        spec:
+          schedulerName: volcano
+          minAvailable: 1
+          tasks:
+            - replicas: 1
+              name: world
+              template:
+                spec:
+                  containers:
+                    - name: world
+                      image: busybox:latest
+                      command:
+                        - /bin/sh
+                        - -c
+                        - echo "Step 2: World" && sleep 5
+                  restartPolicy: Never
+

@@ -1,0 +1,53 @@
+# MVP 版本 - 最简单的训练任务示例
+# 只包含核心配置，便于理解和修改
+
+apiVersion: batch.volcano.sh/v1alpha1
+kind: Job
+metadata:
+  name: training-job-mvp
+  namespace: default
+spec:
+  # ⚠️ 必须指定：使用 Volcano 调度器
+  schedulerName: volcano
+  
+  # ⚠️ 必须指定：使用训练队列
+  queue: training-queue
+  
+  # 最少需要 1 个 Pod 才能开始
+  # 如果设置为 2，则需要同时调度 2 个 Pod（Gang Scheduling）
+  minAvailable: 1
+  
+  # 任务定义
+  tasks:
+    - replicas: 1              # 1 个 Pod（可以改为 2、4、8 等）
+      name: trainer
+      template:
+        spec:
+          containers:
+            - image: nvidia/cuda:11.8.0-base-ubuntu22.04  # ⚠️ 修改为你的训练镜像
+              name: trainer
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  # ⚠️ 修改为你的训练命令
+                  echo "开始训练..."
+                  # python train.py --epochs=10
+                  sleep 60  # 测试用：运行 60 秒
+                  echo "训练完成"
+              
+              # 资源需求
+              # ⚠️ 根据你的实际需求调整
+              resources:
+                requests:
+                  cpu: "4"                    # 请求 4 核 CPU
+                  memory: "16Gi"              # 请求 16Gi 内存
+                  nvidia.com/gpu: "1"         # 请求 1 个 GPU
+                limits:
+                  cpu: "8"                    # 最多使用 8 核 CPU
+                  memory: "32Gi"              # 最多使用 32Gi 内存
+                  nvidia.com/gpu: "1"         # 最多使用 1 个 GPU
+          
+          # 重启策略：Never 表示 Pod 失败后不重启
+          restartPolicy: Never
+

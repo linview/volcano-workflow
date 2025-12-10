@@ -1,0 +1,32 @@
+# 最简 Volcano Job 示例
+# 用于验证 Volcano 调度器的基本功能
+
+apiVersion: batch.volcano.sh/v1alpha1
+kind: Job
+metadata:
+  name: simple-job
+  namespace: volcano-system
+spec:
+  # ⚠️ 关键：必须指定使用 Volcano 调度器
+  schedulerName: volcano
+  
+  # 最少需要 1 个 Pod 才能开始（Gang Scheduling）
+  minAvailable: 1
+  
+  # 任务定义
+  tasks:
+    - replicas: 1              # 1 个 Pod
+      name: hello
+      template:
+        spec:
+          containers:
+            - name: hello
+              # TODO: 这里填写业务实际需要的镜像名，例如 mycompany/app:tag
+              # 示例镜像 busybox:latest 仅用于演示，如不确定请联系相关研发确认
+              image: busybox:latest
+              command:
+                - /bin/sh
+                - -c
+                - echo "Hello from Volcano Job!" && sleep 10
+          restartPolicy: Never
+
