@@ -1,0 +1,81 @@
+# Volcano Job 示例：挂载 NAS 存储
+# 演示如何在 Job 中挂载 NAS 数据并输出结果
+
+apiVersion: batch.volcano.sh/v1alpha1
+kind: Job
+metadata:
+  name: training-job-with-nas
+  namespace: default
+spec:
+  schedulerName: volcano
+  queue: training-queue
+  minAvailable: 1
+  
+  tasks:
+    - replicas: 1
+      name: trainer
+      template:
+        spec:
+          containers:
+          - name: trainer
+            image: nvidia/cuda:11.8.0-base-ubuntu22.04
+            command:
+              - /bin/bash
+              - -c
+              - |
+                echo "=== 训练任务开始 ==="
+                
+                # 1. 检查 NAS 数据挂载
+                echo "检查数据目录..."
+                ls -lh /data/input || echo "数据目录不存在，将创建测试数据"
+                mkdir -p /data/input
+                echo "测试数据" > /data/input/test.txt
+                
+                # 2. 执行训练脚本
+                echo "开始训练..."
+                # python /workspace/train.py --data-dir=/data/input --output-dir=/data/output
+                
+                # 3. 模拟训练过程
+                echo "训练中..." > /data/output/training.log
+                sleep 60
+                
+                # 4. 保存结果到 NAS
+                echo "保存训练结果..."
+                echo "训练完成时间: $(date)" >> /data/output/training.log
+                echo "模型已保存到: /data/output/model.pth" >> /data/output/training.log
+                
+                # 5. 验证结果已保存
+                ls -lh /data/output/
+                echo "=== 训练任务完成 ==="
+            
+            # 挂载 NAS 存储
+            volumeMounts:
+            - name: nas-storage
+              mountPath: /data/input          # 输入数据目录
+              subPath: input                  # 使用子路径
+            - name: nas-storage
+              mountPath: /data/output         # 输出结果目录
+              subPath: output                 # 使用子路径
+            - name: scripts
+              mountPath: /workspace/scripts   # 脚本目录（可选）
+            
+            resources:
+              requests:
+                cpu: "4"
+                memory: "16Gi"
+                nvidia.com/gpu: "1"
+              limits:
+                cpu: "8"
+                memory: "32Gi"
+                nvidia.com/gpu: "1"
+          
+          # 定义卷
+          volumes:
+          - name: nas-storage
+            persistentVolumeClaim:
+              claimName: nas-pvc              # ⚠️ 需要先创建 PVC
+          - name: scripts
+            configMap:
+              name: training-scripts          # ⚠️ 可选：从 ConfigMap 挂载脚本
+          
+          restartPolicy: Never

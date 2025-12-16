@@ -1,0 +1,117 @@
+# 完整的训练 Job 示例
+# 包含：NAS 挂载、资源限制、节点选择、失败重试
+
+apiVersion: batch.volcano.sh/v1alpha1
+kind: Job
+metadata:
+  name: complete-training-job
+  namespace: default
+  labels:
+    app: training
+    task-type: model-training
+spec:
+  schedulerName: volcano
+  queue: training-queue
+  minAvailable: 1
+  
+  # 失败重试策略
+  policies:
+  - event: PodFailed
+    action: RestartJob
+    maxRetry: 3
+  
+  tasks:
+    - replicas: 1
+      name: trainer
+      template:
+        metadata:
+          labels:
+            app: training
+            task: trainer
+        spec:
+          # 节点选择：A100 GPU
+          nodeSelector:
+            gpu.type: a100
+          
+          # 节点亲和性：优先选择低使用率节点
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: gpu.type
+                    operator: In
+                    values: ["a100"]
+              
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                preference:
+                  matchExpressions:
+                  - key: metrics.gpu.utilization
+                    operator: Lt
+                    values: ["50%"]
+          
+          containers:
+          - name: trainer
+            image: nvidia/cuda:11.8.0-base-ubuntu22.04
+            command:
+              - /bin/bash
+              - -c
+              - |
+                set -e
+                
+                echo "=== 训练任务开始 ==="
+                echo "时间: $(date)"
+                echo "Pod: $HOSTNAME"
+                echo "节点: $(hostname)"
+                
+                # 检查资源
+                echo "=== 资源信息 ==="
+                echo "CPU: $(nproc) cores"
+                echo "内存: $(free -h | grep Mem | awk '{print $2}')"
+                nvidia-smi --query-gpu=name,memory.total --format=csv || echo "GPU 信息获取失败"
+                
+                # 检查数据
+                echo "=== 数据检查 ==="
+                ls -lh /data/input || echo "数据目录不存在，将创建测试数据"
+                mkdir -p /data/input
+                echo "测试数据" > /data/input/test.txt
+                
+                # 执行训练（示例）
+                echo "=== 开始训练 ==="
+                sleep 60
+                
+                # 保存结果
+                echo "=== 保存结果 ==="
+                mkdir -p /data/output
+                echo "训练完成时间: $(date)" > /data/output/training.log
+                echo "模型已保存" >> /data/output/training.log
+                
+                echo "=== 训练任务完成 ==="
+            
+            # 挂载存储
+            volumeMounts:
+            - name: nas-storage
+              mountPath: /data/input
+              subPath: input
+            - name: nas-storage
+              mountPath: /data/output
+              subPath: output
+            
+            # 资源限制
+            resources:
+              requests:
+                cpu: "8"
+                memory: "32Gi"
+                nvidia.com/gpu: "1"
+              limits:
+                cpu: "16"
+                memory: "64Gi"
+                nvidia.com/gpu: "1"
+          
+          volumes:
+          - name: nas-storage
+            persistentVolumeClaim:
+              claimName: nas-pvc              # ⚠️ 需要先创建 PVC
+          
+          restartPolicy: Never

@@ -1,0 +1,41 @@
+# K8s 原生 Job 示例
+# 演示 Job 和 Pod 的基本关系
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k8s-job-example
+  namespace: default
+spec:
+  # 需要完成 1 个任务
+  completions: 1
+  # 同时运行 1 个 Pod
+  parallelism: 1
+  # 如果任务失败，最多重试 3 次
+  backoffLimit: 3
+  # Pod 模板
+  template:
+    metadata:
+      labels:
+        app: k8s-job-example
+    spec:
+      containers:
+      - name: worker
+        image: busybox:latest
+        command:
+          - /bin/sh
+          - -c
+          - |
+            echo "Job 开始执行..."
+            echo "Pod 名称: $HOSTNAME"
+            echo "当前时间: $(date)"
+            sleep 30
+            echo "Job 执行完成"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+      restartPolicy: Never

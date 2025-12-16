@@ -1,0 +1,84 @@
+# Volcano Job 示例：完整资源配置
+# 演示如何设置 GPU、CPU、内存、IO 资源
+
+apiVersion: batch.volcano.sh/v1alpha1
+kind: Job
+metadata:
+  name: training-job-full-resources
+  namespace: default
+spec:
+  schedulerName: volcano
+  queue: training-queue
+  minAvailable: 1
+  
+  tasks:
+    - replicas: 1
+      name: trainer
+      template:
+        spec:
+          # 节点选择：GPU 类型
+          nodeSelector:
+            gpu.type: a100
+          
+          # 节点亲和性：优先选择低使用率的节点
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: gpu.type
+                    operator: In
+                    values: ["a100"]
+                  - key: disk.type
+                    operator: In
+                    values: ["nvme"]
+              
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                preference:
+                  matchExpressions:
+                  - key: metrics.gpu.utilization
+                    operator: Lt
+                    values: ["50%"]
+              - weight: 80
+                preference:
+                  matchExpressions:
+                  - key: metrics.cpu.utilization
+                    operator: Lt
+                    values: ["60%"]
+              - weight: 60
+                preference:
+                  matchExpressions:
+                  - key: metrics.disk.iops-available
+                    operator: Gt
+                    values: ["50000"]
+          
+          containers:
+          - name: trainer
+            image: nvidia/cuda:11.8.0-base-ubuntu22.04
+            command:
+              - /bin/bash
+              - -c
+              - |
+                echo "=== 资源信息 ==="
+                echo "CPU 核心数: $(nproc)"
+                echo "内存大小: $(free -h | grep Mem | awk '{print $2}')"
+                echo "GPU 信息:"
+                nvidia-smi --query-gpu=name,memory.total --format=csv
+                echo "================"
+                sleep 60
+            
+            resources:
+              # 资源请求（最低标准）
+              requests:
+                cpu: "8"                    # 最低 8 核 CPU
+                memory: "32Gi"              # 最低 32Gi 内存
+                nvidia.com/gpu: "1"         # 最低 1 个 GPU
+              
+              # 资源限制（上限）
+              limits:
+                cpu: "16"                   # 最多 16 核 CPU
+                memory: "64Gi"              # 最多 64Gi 内存
+                nvidia.com/gpu: "1"         # 最多 1 个 GPU
+            
+            restartPolicy: Never

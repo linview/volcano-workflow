@@ -1,0 +1,15 @@
+# PersistentVolumeClaim 示例
+# 用于挂载 NAS 存储
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nas-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany                 # 支持多 Pod 同时读写
+  storageClassName: nas-storage     # ⚠️ 需要先创建对应的 StorageClass 或 PV
+  resources:
+    requests:
+      storage: 500Gi                # 请求的存储大小
