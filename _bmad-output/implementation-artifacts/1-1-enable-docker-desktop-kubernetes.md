@@ -1,6 +1,6 @@
 # Story 1.1: Enable Docker Desktop Kubernetes
 
-Status: ready-for-dev
+Status: completed
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -19,30 +19,30 @@ so that I can run a local K8s cluster for testing.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Enable Kubernetes in Docker Desktop (AC: 1)
-  - [ ] Open Docker Desktop application
-  - [ ] Navigate to Settings → Kubernetes
-  - [ ] Enable Kubernetes checkbox
-  - [ ] Wait for Kubernetes to start (typically 2-3 minutes)
-  - [ ] Verify Kubernetes is running (green indicator)
+- [x] Task 1: Enable Kubernetes in Docker Desktop (AC: 1)
+  - [x] Open Docker Desktop application
+  - [x] Navigate to Settings → Kubernetes
+  - [x] Enable Kubernetes checkbox
+  - [x] Wait for Kubernetes to start (typically 2-3 minutes)
+  - [x] Verify Kubernetes is running (green indicator)
 
-- [ ] Task 2: Verify kubectl connectivity (AC: 2)
-  - [ ] Check kubectl is installed: `kubectl version --client`
-  - [ ] Verify kubectl context points to Docker Desktop: `kubectl config current-context`
-  - [ ] Test cluster connection: `kubectl cluster-info`
-  - [ ] Verify cluster access: `kubectl get nodes`
+- [x] Task 2: Verify kubectl connectivity (AC: 2)
+  - [x] Check kubectl is installed: `kubectl version --client`
+  - [x] Verify kubectl context points to Docker Desktop: `kubectl config current-context`
+  - [x] Test cluster connection: `kubectl cluster-info`
+  - [x] Verify cluster access: `kubectl get nodes`
 
-- [ ] Task 3: Verify system pods status (AC: 3)
-  - [ ] Check all namespaces: `kubectl get pods --all-namespaces`
-  - [ ] Verify kube-system pods are Running: `kubectl get pods -n kube-system`
-  - [ ] Check for any Pending or Error pods
-  - [ ] Verify core services (kube-dns, kube-proxy) are running
+- [x] Task 3: Verify system pods status (AC: 3)
+  - [x] Check all namespaces: `kubectl get pods --all-namespaces`
+  - [x] Verify kube-system pods are Running: `kubectl get pods -n kube-system`
+  - [x] Check for any Pending or Error pods
+  - [x] Verify core services (kube-dns, kube-proxy) are running
 
-- [ ] Task 4: Verify cluster readiness (AC: 4)
-  - [ ] Check node status: `kubectl get nodes` (should show Ready)
-  - [ ] Verify node resources: `kubectl describe node`
-  - [ ] Test pod creation: `kubectl run test-pod --image=busybox --rm -it --restart=Never -- echo "Hello"`
-  - [ ] Clean up test pod if needed
+- [x] Task 4: Verify cluster readiness (AC: 4)
+  - [x] Check node status: `kubectl get nodes` (should show Ready)
+  - [x] Verify node resources: `kubectl describe node`
+  - [x] Test pod creation: `kubectl run test-pod --image=busybox --rm -it --restart=Never -- echo "Hello"`
+  - [x] Clean up test pod if needed
 
 ## Dev Notes
 
@@ -112,10 +112,10 @@ volcano-workflow/
 - No automated tests needed for this infrastructure setup story
 
 **Verification Checklist:**
-- [ ] Docker Desktop Kubernetes enabled
-- [ ] kubectl connects successfully
-- [ ] All system pods Running
-- [ ] Test pod can be created and runs successfully
+- [x] Docker Desktop Kubernetes enabled
+- [x] kubectl connects successfully
+- [x] All system pods Running
+- [x] Test pod can be created and runs successfully
 
 ### References
 
@@ -154,6 +154,37 @@ Claude Sonnet 4.5
 ### Debug Log References
 
 ### Completion Notes List
+
+**验证完成时间:** 2025-12-17 17:26
+
+**验收结果:** ✅ 所有验收标准均已通过
+
+**验证详情:**
+1. ✅ **AC1: Docker Desktop Kubernetes 已启用并运行**
+   - kubectl 客户端版本: v1.32.2
+   - 当前上下文: docker-desktop
+   - 集群控制平面运行正常
+
+2. ✅ **AC2: kubectl 可以连接到本地集群**
+   - kubectl cluster-info 成功连接
+   - 节点查询成功: desktop-control-plane (Ready, v1.31.1)
+
+3. ✅ **AC3: 所有系统 pods 处于 Running 状态**
+   - kube-system 命名空间下所有 pods 均为 Running
+   - CoreDNS (kube-dns) 运行正常: 2/2 pods Running
+   - kube-proxy 运行正常: 1/1 pod Running
+   - 核心组件全部运行: etcd, kube-apiserver, kube-controller-manager, kube-scheduler
+
+4. ✅ **AC4: 集群已准备好接受工作负载**
+   - 节点状态: Ready
+   - 节点资源充足 (CPU: 14 cores, 无内存/磁盘压力)
+   - 测试 pod 创建成功并正常执行
+
+**环境信息:**
+- Kubernetes 版本: v1.31.1
+- kubectl 版本: v1.32.2
+- 节点: desktop-control-plane (control-plane, Ready)
+- 运行时间: 6h11m
 
 ### File List
 
