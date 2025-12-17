@@ -42,7 +42,7 @@ story_location: "{project-root}/_bmad-output/implementation-artifacts"
 development_status:
   epic-1: in-progress
   1-1-enable-docker-desktop-kubernetes: ready-for-dev
-  1-2-deploy-redis-service: ready-for-dev
+  1-2-deploy-redis-service: done
   1-3-install-and-verify-volcano: backlog
   1-4-volcano-workflow-smoke-test: backlog
   epic-1-retrospective: optional
