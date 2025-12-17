@@ -25,6 +25,7 @@ desktop.ini
 .vscode/
 .cursor/
 .bmad/
+_bmad/
 *.iml
 *.ipr
 *.iws
